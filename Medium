@@ -1,0 +1,103 @@
+CREATE DATABASE CompanyDB; 
+USE CompanyDB; 
+CREATE TABLE employees ( 
+id INT PRIMARY KEY AUTO_INCREMENT, 
+name VARCHAR(100) NOT NULL, 
+position VARCHAR(100), 
+salary DECIMAL(10,2) 
+); 
+INSERT INTO employees (name, position, salary) VALUES 
+('Alice Johnson', 'Software Engineer', 75000.00), 
+('Bob Smith', 'Manager', 90000.00), 
+('Charlie Brown', 'Analyst', 65000.00); 
+
+//Java code: 
+import java.io.IOException; 
+import java.io.PrintWriter; 
+import java.sql.Connection; 
+import java.sql.DriverManager; 
+import java.sql.PreparedStatement; 
+import java.sql.ResultSet; 
+import javax.servlet.ServletException; 
+import javax.servlet.annotation.WebServlet; 
+import javax.servlet.http.HttpServlet; 
+import javax.servlet.http.HttpServletRequest; 
+import javax.servlet.http.HttpServletResponse; 
+@WebServlet("/EmployeeServlet") 
+public class EmployeeServlet extends HttpServlet { 
+private static final String JDBC_URL = 
+"jdbc:mysql://localhost:3306/CompanyDB"; 
+private static final String JDBC_USER = "root"; // Change as per your MySQL 
+setup 
+private static final String JDBC_PASS = "password"; // Change accordingly 
+protected void doGet(HttpServletRequest request, HttpServletResponse response) 
+throws ServletException, IOException { 
+        response.setContentType("text/html"); 
+        PrintWriter out = response.getWriter(); 
+ 
+        try { 
+            Class.forName("com.mysql.cj.jdbc.Driver"); 
+            Connection conn = DriverManager.getConnection(JDBC_URL, 
+JDBC_USER, JDBC_PASS); 
+ 
+            String searchId = request.getParameter("id"); 
+            String query = "SELECT * FROM employees"; 
+ 
+            if (searchId != null && !searchId.isEmpty()) { 
+                query += " WHERE id = ?"; 
+            } 
+ 
+            PreparedStatement stmt = conn.prepareStatement(query); 
+ 
+            if (searchId != null && !searchId.isEmpty()) { 
+                stmt.setInt(1, Integer.parseInt(searchId)); 
+            } 
+ 
+            ResultSet rs = stmt.executeQuery(); 
+ 
+            out.println("<html><head><title>Employee List</title></head><body>"); 
+            out.println("<h2>Employee Details</h2>"); 
+            out.println("<form action='EmployeeServlet' method='GET'>"); 
+            out.println("Search by ID: <input type='text' name='id'/> <input type='submit' 
+value='Search'/>"); 
+            out.println("</form><br>"); 
+ 
+            out.println("<table 
+border='1'><tr><th>ID</th><th>Name</th><th>Position</th><th>Salary</th>
+ </tr>"); 
+ 
+            boolean found = false; 
+            while (rs.next()) { 
+                found = true; 
+                out.println("<tr><td>" + rs.getInt("id") + "</td>"); 
+                out.println("<td>" + rs.getString("name") + "</td>"); 
+                out.println("<td>" + rs.getString("position") + "</td>"); 
+                out.println("<td>" + rs.getDouble("salary") + "</td></tr>"); 
+            } 
+ 
+            if (!found) { 
+                out.println("<tr><td colspan='4'>No Employee Found</td></tr>"); 
+            } 
+ 
+            out.println("</table></body></html>"); 
+ 
+            rs.close(); 
+            stmt.close(); 
+            conn.close(); 
+        } catch (Exception e) { 
+            out.println("<h3>Error: " + e.getMessage() + "</h3>"); 
+        } 
+    } 
+} 
+ 
+//XML code: 
+<web-app> 
+    <servlet> 
+        <servlet-name>EmployeeServlet</servlet-name> 
+        <servlet-class>EmployeeServlet</servlet-class> 
+    </servlet> 
+    <servlet-mapping> 
+        <servlet-name>EmployeeServlet</servlet-name> 
+        <url-pattern>/EmployeeServlet</url-pattern> 
+    </servlet-mapping> 
+</web-app>
